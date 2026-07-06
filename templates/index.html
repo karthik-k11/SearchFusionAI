@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SearchFusionAI</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">
+            SearchFusionAI
+        </div>
+
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Upload</a>
+            <a href="#">History</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+
+        <h1>Hybrid Document Search & Retrieval</h1>
+
+        <p>
+            SearchFusionAI combines keyword search and semantic search
+            to deliver accurate and intelligent document retrieval.
+        </p>
+
+        <div class="buttons">
+
+            <form method="POST" enctype="multipart/form-data">
+
+                <input type="file" name="document" required>
+
+                <br><br>
+
+                <button type="submit">
+                    Upload Document
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+    {% if message %}
+
+    <section class="about">
+
+    <h2>{{ message }}</h2>
+
+    <p><strong>File Name:</strong> {{ file_name }}</p>
+
+    <p><strong>Characters:</strong> {{ character_count }}</p>
+
+    <br>
+
+    <h3>Extracted Text Preview</h3>
+
+    <pre>{{ preview_text[:1500] }}</pre>
+
+    <br><br>
+
+    <h3>BM25 Index</h3>
+
+    {% if bm25_ready %}
+
+    <p style="color:green;">
+    ✓ BM25 Index Built Successfully
+    </p>
+
+    {% endif %}
+
+    <br>
+
+    <h3>Generated Chunks</h3>
+
+
+    {% for chunk in chunks %}
+
+    <div class="card">
+
+    <h4>Chunk {{ loop.index }}</h4>
+
+    <p>{{ chunk[:500] }}</p>
+
+    </div>
+
+    <br>
+
+    {% endfor %}
+
+    </section>
+
+    {% endif %}
+
+<section class="about">
+
+
+        <h2>About</h2>
+
+        <p>
+            This project demonstrates how modern retrieval systems use
+            BM25, FAISS, Sentence Transformers, and Reciprocal Rank Fusion (RRF)
+            to build intelligent search experiences without relying on cloud LLM APIs.
+        </p>
+
+    </section>
+
+    <section class="tech">
+
+        <h2>Technologies</h2>
+
+        <div class="tech-grid">
+
+            <div class="card">BM25</div>
+            <div class="card">FAISS</div>
+            <div class="card">Sentence Transformers</div>
+            <div class="card">Hybrid Search</div>
+            <div class="card">RRF</div>
+            <div class="card">Flask</div>
+            <div class="card">SQLite</div>
+
+        </div>
+
+    </section>
+
+    <footer>
+
+        SearchFusionAI © 2026
+
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+
+</html>
