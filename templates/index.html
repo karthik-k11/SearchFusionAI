@@ -11,34 +11,45 @@
 
 <body>
 
-    <nav>
+    <header>
+
         <div class="logo">
-            SearchFusionAI
+
+            <h2>SearchFusionAI</h2>
+            <span>Hybrid Search & Retrieval System</span>
+
         </div>
 
-        <div class="nav-links">
-            <a href="#">Home</a>
-            <a href="#">Upload</a>
-            <a href="#">History</a>
+        <div class="status">
+
+            {% if bm25_ready %}
+                <span class="status-ready">● Index Ready</span>
+            {% else %}
+                <span class="status-not-ready">● No Documents Indexed</span>
+            {% endif %}
+
         </div>
-    </nav>
 
-    <section class="hero">
+    </header>
 
-        <h1>Hybrid Document Search & Retrieval</h1>
+    <main class="container">
 
-        <p>
-            SearchFusionAI combines keyword search and semantic search
-            to deliver accurate and intelligent document retrieval.
-        </p>
 
-        <div class="buttons">
+        <section class="panel">
+
+            <h3>Upload Documents</h3>
+
+            <p class="subtitle">
+                Upload PDF or TXT documents to build the search index.
+            </p>
 
             <form method="POST" enctype="multipart/form-data">
 
-                <input type="file" name="document" required>
-
-                <br><br>
+                <input
+                    type="file"
+                    name="document"
+                    required
+                >
 
                 <button type="submit">
                     Upload Document
@@ -46,97 +57,221 @@
 
             </form>
 
-        </div>
+            {% if message %}
 
-    </section>
+            <div class="success-box">
 
-    {% if message %}
+                {{ message }}
 
-    <section class="about">
+            </div>
 
-    <h2>{{ message }}</h2>
+            {% endif %}
 
-    <p><strong>File Name:</strong> {{ file_name }}</p>
+        </section>
 
-    <p><strong>Characters:</strong> {{ character_count }}</p>
+        <!-- Search -->
 
-    <br>
+        <section class="panel">
 
-    <h3>Extracted Text Preview</h3>
+            <h3>Search</h3>
 
-    <pre>{{ preview_text[:1500] }}</pre>
+            <p class="subtitle">
+                Search indexed documents using BM25 keyword retrieval.
+            </p>
 
-    <br><br>
+            <form method="GET" class="search-form">
 
-    <h3>BM25 Index</h3>
+                <input
+                    type="text"
+                    name="query"
+                    value="{{ query }}"
+                    placeholder="Search documents..."
+                >
 
-    {% if bm25_ready %}
+                <button type="submit">
 
-    <p style="color:green;">
-    ✓ BM25 Index Built Successfully
-    </p>
+                    Search
 
-    {% endif %}
+                </button>
 
-    <br>
+            </form>
 
-    <h3>Generated Chunks</h3>
-
-
-    {% for chunk in chunks %}
-
-    <div class="card">
-
-    <h4>Chunk {{ loop.index }}</h4>
-
-    <p>{{ chunk[:500] }}</p>
-
-    </div>
-
-    <br>
-
-    {% endfor %}
-
-    </section>
-
-    {% endif %}
-
-<section class="about">
+        </section>
 
 
-        <h2>About</h2>
+        <section class="panel">
 
-        <p>
-            This project demonstrates how modern retrieval systems use
-            BM25, FAISS, Sentence Transformers, and Reciprocal Rank Fusion (RRF)
-            to build intelligent search experiences without relying on cloud LLM APIs.
-        </p>
+            <h3>Search Results</h3>
 
-    </section>
+            {% if not file_name %}
 
-    <section class="tech">
+                <div class="empty-state">
 
-        <h2>Technologies</h2>
+                    <h4>No documents indexed</h4>
 
-        <div class="tech-grid">
+                    <p>
+                        Upload a PDF or TXT document to start searching.
+                    </p>
 
-            <div class="card">BM25</div>
-            <div class="card">FAISS</div>
-            <div class="card">Sentence Transformers</div>
-            <div class="card">Hybrid Search</div>
-            <div class="card">RRF</div>
-            <div class="card">Flask</div>
-            <div class="card">SQLite</div>
+                </div>
 
-        </div>
+            {% elif query %}
 
-    </section>
+                {% if results %}
 
-    <footer>
+                    <div class="success-box">
 
-        SearchFusionAI © 2026
+                        {{ results|length }} result(s) found for
+                        "<strong>{{ query }}</strong>"
 
-    </footer>
+                    </div>
+
+                    {% for chunk, score in results %}
+
+                    <div class="result-card">
+
+                        <div class="result-header">
+
+                            <h4>{{ file_name }}</h4>
+
+                            <span>
+
+                                BM25 Score :
+                                {{ "%.2f"|format(score) }}
+
+                            </span>
+
+                        </div>
+
+                        <div class="preview">
+
+                            {{ chunk[:500] }}...
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="empty-state">
+
+                        <h4>No Results Found</h4>
+
+                        <p>
+
+                            No documents matched
+
+                            <strong>"{{ query }}"</strong>
+
+                        </p>
+
+                        <br>
+
+                        <ul>
+
+                            <li>Check the spelling.</li>
+
+                            <li>Try another keyword.</li>
+
+                            <li>Use broader search terms.</li>
+
+                        </ul>
+
+                    </div>
+
+                {% endif %}
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <h4>Ready to Search</h4>
+
+                    <p>
+
+                        Your document has been indexed.
+
+                        Enter a keyword above to search.
+
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+        <!-- Developer Panel -->
+
+        <details class="developer-panel">
+
+            <summary>
+
+                Developer Panel (Development Only)
+
+            </summary>
+
+            <div class="developer-content">
+
+                <h4>Indexed Document</h4>
+
+                <p>
+
+                    <strong>File :</strong>
+
+                    {{ file_name }}
+
+                </p>
+
+                <p>
+
+                    <strong>Characters :</strong>
+
+                    {{ character_count }}
+
+                </p>
+
+                <br>
+
+                <h4>Extracted Text Preview</h4>
+
+                <pre>
+
+{{ preview_text[:1500] }}
+
+                </pre>
+
+                <br>
+
+                <h4>Generated Chunks</h4>
+
+                {% for chunk in chunks %}
+
+                    <div class="chunk-card">
+
+                        <strong>
+
+                            Chunk {{ loop.index }}
+
+                        </strong>
+
+                        <br><br>
+
+                        {{ chunk[:500] }}
+
+                    </div>
+
+                    <br>
+
+                {% endfor %}
+
+            </div>
+
+        </details>
+
+    </main>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 

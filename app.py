@@ -3,31 +3,44 @@ import os
 
 from extractor import extract_text
 from chunker import create_chunks
-from bm25_engine import build_bm25
+from bm25_engine import build_bm25, search_bm25
 
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+current_chunks = []
+current_bm25 = None
+current_file_name = ""
+current_character_count = 0
+current_preview_text = ""
+
 
 @app.route("/", methods=["GET", "POST"])
 def home():
 
-    preview_text = ""
-    chunks = []
-    bm25_ready = False
+    global current_chunks
+    global current_bm25
+    global current_file_name
+    global current_character_count
+    global current_preview_text
 
-    file_name = ""
-    character_count = 0
+    preview_text = current_preview_text
+    chunks = current_chunks
+    file_name = current_file_name
+    character_count = current_character_count
 
     message = ""
+    results = []
+    bm25_ready = current_bm25 is not None
 
+    # ---------- Upload ----------
     if request.method == "POST":
 
         uploaded_file = request.files.get("document")
 
-        if uploaded_file and uploaded_file.filename != "":
+        if uploaded_file and uploaded_file.filename:
 
             file_path = os.path.join(
                 app.config["UPLOAD_FOLDER"],
@@ -40,18 +53,36 @@ def home():
 
             chunks = create_chunks(preview_text)
 
-            bm25 = build_bm25(chunks)
+            current_bm25 = build_bm25(chunks)
 
-            file_name = uploaded_file.filename
+            current_chunks = chunks
+            current_preview_text = preview_text
+            current_file_name = uploaded_file.filename
+            current_character_count = len(preview_text)
 
-            character_count = len(preview_text)
+            preview_text = current_preview_text
+            chunks = current_chunks
+            file_name = current_file_name
+            character_count = current_character_count
 
-            message = "Document uploaded successfully."
             bm25_ready = True
+            message = "Document uploaded successfully."
 
-        else:
+    # ---------- Search ----------
+    query = request.args.get("query", "").strip()
 
-            message = "Please choose a file."
+    if query and current_bm25:
+
+        results = search_bm25(
+            current_bm25,
+            current_chunks,
+            query
+        )
+
+        preview_text = current_preview_text
+        chunks = current_chunks
+        file_name = current_file_name
+        character_count = current_character_count
 
     return render_template(
         "index.html",
@@ -60,7 +91,9 @@ def home():
         file_name=file_name,
         character_count=character_count,
         message=message,
-        bm25_ready=bm25_ready
+        bm25_ready=bm25_ready,
+        results=results,
+        query=query
     )
 
 
