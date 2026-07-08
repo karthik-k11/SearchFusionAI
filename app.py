@@ -4,6 +4,7 @@ import os
 from extractor import extract_text
 from chunker import create_chunks
 from bm25_engine import build_bm25, search_bm25
+from embedding_engine import generate_embeddings
 
 app = Flask(__name__)
 
@@ -15,6 +16,8 @@ current_bm25 = None
 current_file_name = ""
 current_character_count = 0
 current_preview_text = ""
+current_embeddings = None
+embedding_count = 0
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -25,6 +28,8 @@ def home():
     global current_file_name
     global current_character_count
     global current_preview_text
+    global current_embeddings
+    global embedding_count
 
     preview_text = current_preview_text
     chunks = current_chunks
@@ -35,7 +40,6 @@ def home():
     results = []
     bm25_ready = current_bm25 is not None
 
-    # ---------- Upload ----------
     if request.method == "POST":
 
         uploaded_file = request.files.get("document")
@@ -54,6 +58,9 @@ def home():
             chunks = create_chunks(preview_text)
 
             current_bm25 = build_bm25(chunks)
+            current_embeddings = generate_embeddings(chunks)
+
+            embedding_count = len(current_embeddings)
 
             current_chunks = chunks
             current_preview_text = preview_text
@@ -68,7 +75,6 @@ def home():
             bm25_ready = True
             message = "Document uploaded successfully."
 
-    # ---------- Search ----------
     query = request.args.get("query", "").strip()
 
     if query and current_bm25:
@@ -93,7 +99,8 @@ def home():
         message=message,
         bm25_ready=bm25_ready,
         results=results,
-        query=query
+        query=query,
+        embedding_count=embedding_count
     )
 
 
