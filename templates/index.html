@@ -11,281 +11,356 @@
 
 <body>
 
-    <header>
+<header>
 
-        <div class="logo">
+    <div class="logo">
 
-            <h2>SearchFusionAI</h2>
-            <span>Hybrid Search & Retrieval System</span>
+        <h2>SearchFusionAI</h2>
+
+        <span>Hybrid Search & Retrieval System</span>
+
+    </div>
+
+    <div class="status">
+
+        {% if bm25_ready %}
+
+        <span class="status-ready">
+
+            ● Index Ready
+
+        </span>
+
+        {% else %}
+
+        <span class="status-not-ready">
+
+            ● No Documents Indexed
+
+        </span>
+
+        {% endif %}
+
+    </div>
+
+</header>
+
+<main class="container">
+
+
+    <section class="panel">
+
+        <h3>Upload Documents</h3>
+
+        <p class="subtitle">
+
+            Upload PDF or TXT documents to build the search index.
+
+        </p>
+
+        <form method="POST" enctype="multipart/form-data">
+
+            <input
+                type="file"
+                name="document"
+                required
+            >
+
+            <button type="submit">
+
+                Upload Document
+
+            </button>
+
+        </form>
+
+        {% if message %}
+
+        <div class="success-box">
+
+            {{ message }}
 
         </div>
 
-        <div class="status">
+        {% endif %}
 
-            {% if bm25_ready %}
-                <span class="status-ready">● Index Ready</span>
-            {% else %}
-                <span class="status-not-ready">● No Documents Indexed</span>
-            {% endif %}
-
-        </div>
-
-    </header>
-
-    <main class="container">
+    </section>
 
 
-        <section class="panel">
+    <section class="panel">
 
-            <h3>Upload Documents</h3>
+        <h3>Search</h3>
 
-            <p class="subtitle">
-                Upload PDF or TXT documents to build the search index.
+        <p class="subtitle">
+
+            Search documents using Hybrid Search.
+
+        </p>
+
+        <form method="GET" class="search-form">
+
+            <input
+
+                type="text"
+
+                name="query"
+
+                value="{{ query }}"
+
+                placeholder="Search documents..."
+
+            >
+
+            <button type="submit">
+
+                Search
+
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <section class="panel">
+
+        <h3>Hybrid Search Results</h3>
+
+        {% if not file_name %}
+
+        <div class="empty-state">
+
+            <h4>
+
+                No documents indexed
+
+            </h4>
+
+            <p>
+
+                Upload a document to begin searching.
+
             </p>
 
-            <form method="POST" enctype="multipart/form-data">
+        </div>
 
-                <input
-                    type="file"
-                    name="document"
-                    required
-                >
+        {% elif query %}
 
-                <button type="submit">
-                    Upload Document
-                </button>
-
-            </form>
-
-            {% if message %}
+            {% if hybrid_results %}
 
             <div class="success-box">
 
-                {{ message }}
+                {{ hybrid_results|length }}
+
+                result(s) found for
+
+                "<strong>{{ query }}</strong>"
+
+            </div>
+
+            {% for chunk, score in hybrid_results %}
+
+            <div class="result-card">
+
+                <div class="result-header">
+
+                    <h4>
+
+                        {{ file_name }}
+
+                    </h4>
+
+                    <span>
+
+                        Hybrid Score :
+
+                        {{ "%.4f"|format(score) }}
+
+                    </span>
+
+                </div>
+
+                <div class="preview">
+
+                    {{ chunk[:500] }}...
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <h4>
+
+                    No Results Found
+
+                </h4>
+
+                <p>
+
+                    No matching content found for
+
+                    <strong>
+
+                        "{{ query }}"
+
+                    </strong>
+
+                </p>
 
             </div>
 
             {% endif %}
 
-        </section>
+        {% else %}
 
-        <!-- Search -->
+        <div class="empty-state">
 
-        <section class="panel">
+            <h4>
 
-            <h3>Search</h3>
+                Ready to Search
 
-            <p class="subtitle">
-                Search indexed documents using BM25 keyword retrieval.
+            </h4>
+
+            <p>
+
+                Upload a document and search.
+
             </p>
 
-            <form method="GET" class="search-form">
+        </div>
 
-                <input
-                    type="text"
-                    name="query"
-                    value="{{ query }}"
-                    placeholder="Search documents..."
-                >
+        {% endif %}
 
-                <button type="submit">
+    </section>
 
-                    Search
+    <details class="developer-panel">
 
-                </button>
+        <summary>
 
-            </form>
+            Developer Panel (Development Only)
 
-        </section>
+        </summary>
 
+        <div class="developer-content">
 
-        <section class="panel">
+            <h4>
 
-            <h3>Search Results</h3>
+                Indexed Document
 
-            {% if not file_name %}
+            </h4>
 
-                <div class="empty-state">
+            <p>
 
-                    <h4>No documents indexed</h4>
+                <strong>File :</strong>
 
-                    <p>
-                        Upload a PDF or TXT document to start searching.
-                    </p>
+                {{ file_name }}
 
-                </div>
+            </p>
 
-            {% elif query %}
+            <p>
 
-                {% if results %}
+                <strong>Characters :</strong>
 
-                    <div class="success-box">
+                {{ character_count }}
 
-                        {{ results|length }} result(s) found for
-                        "<strong>{{ query }}</strong>"
+            </p>
 
-                    </div>
+            <br>
 
-                    {% for chunk, score in results %}
+            <h4>
 
-                    <div class="result-card">
+                Extracted Text Preview
 
-                        <div class="result-header">
+            </h4>
 
-                            <h4>{{ file_name }}</h4>
-
-                            <span>
-
-                                BM25 Score :
-                                {{ "%.2f"|format(score) }}
-
-                            </span>
-
-                        </div>
-
-                        <div class="preview">
-
-                            {{ chunk[:500] }}...
-
-                        </div>
-
-                    </div>
-
-                    {% endfor %}
-
-                {% else %}
-
-                    <div class="empty-state">
-
-                        <h4>No Results Found</h4>
-
-                        <p>
-
-                            No documents matched
-
-                            <strong>"{{ query }}"</strong>
-
-                        </p>
-
-                        <br>
-
-                        <ul>
-
-                            <li>Check the spelling.</li>
-
-                            <li>Try another keyword.</li>
-
-                            <li>Use broader search terms.</li>
-
-                        </ul>
-
-                    </div>
-
-                {% endif %}
-
-            {% else %}
-
-                <div class="empty-state">
-
-                    <h4>Ready to Search</h4>
-
-                    <p>
-
-                        Your document has been indexed.
-
-                        Enter a keyword above to search.
-
-                    </p>
-
-                </div>
-
-            {% endif %}
-
-        </section>
-
-        <!-- Developer Panel -->
-
-        <details class="developer-panel">
-
-            <summary>
-
-                Developer Panel (Development Only)
-
-            </summary>
-
-            <div class="developer-content">
-
-                <h4>Indexed Document</h4>
-
-                <p>
-
-                    <strong>File :</strong>
-
-                    {{ file_name }}
-
-                </p>
-
-                <p>
-
-                    <strong>Characters :</strong>
-
-                    {{ character_count }}
-
-                </p>
-
-                <br>
-
-                <h4>Extracted Text Preview</h4>
-
-                <pre>
+            <pre>
 
 {{ preview_text[:1500] }}
 
-                </pre>
+            </pre>
 
-                <br>
+            <br>
 
-                <h4>Embeddings</h4>
+            <h4>
 
-                <p>
+                Embeddings
+
+            </h4>
+
+            <p>
 
                 <strong>Total Embeddings :</strong>
 
                 {{ embedding_count }}
 
-                </p>
+            </p>
 
-                <br>
+            <br>
 
-                <h4>Generated Chunks</h4>
+            <h4>
 
-                {% for chunk in chunks %}
+                FAISS Index
 
-                    <div class="chunk-card">
+            </h4>
 
-                        <strong>
+            {% if faiss_ready %}
 
-                            Chunk {{ loop.index }}
+            <p style="color:green;">
 
-                        </strong>
+                ✓ FAISS Index Built Successfully
 
-                        <br><br>
+            </p>
 
-                        {{ chunk[:500] }}
+            {% else %}
 
-                    </div>
+            <p style="color:red;">
 
-                    <br>
+                FAISS Index Not Built
 
-                {% endfor %}
+            </p>
+
+            {% endif %}
+
+            <br>
+
+            <h4>
+
+                Generated Chunks
+
+            </h4>
+
+            {% for chunk in chunks %}
+
+            <div class="chunk-card">
+
+                <strong>
+
+                    Chunk {{ loop.index }}
+
+                </strong>
+
+                <br><br>
+
+                {{ chunk[:500] }}
 
             </div>
 
-        </details>
+            <br>
 
-    </main>
+            {% endfor %}
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+        </div>
+
+    </details>
+
+</main>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
 

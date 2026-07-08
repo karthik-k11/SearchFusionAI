@@ -4,7 +4,10 @@ import os
 from extractor import extract_text
 from chunker import create_chunks
 from bm25_engine import build_bm25, search_bm25
-from embedding_engine import generate_embeddings
+from embedding_engine import generate_embeddings, model
+from faiss_engine import build_faiss_index, search_faiss
+from rrf_engine import reciprocal_rank_fusion
+from db import create_database, save_search
 
 app = Flask(__name__)
 
@@ -13,11 +16,16 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 current_chunks = []
 current_bm25 = None
+current_embeddings = None
+current_faiss_index = None
+
+current_preview_text = ""
 current_file_name = ""
 current_character_count = 0
-current_preview_text = ""
-current_embeddings = None
+
 embedding_count = 0
+
+create_database()
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -25,10 +33,13 @@ def home():
 
     global current_chunks
     global current_bm25
+    global current_embeddings
+    global current_faiss_index
+
+    global current_preview_text
     global current_file_name
     global current_character_count
-    global current_preview_text
-    global current_embeddings
+
     global embedding_count
 
     preview_text = current_preview_text
@@ -37,7 +48,11 @@ def home():
     character_count = current_character_count
 
     message = ""
-    results = []
+
+    bm25_results = []
+    semantic_results = []
+    hybrid_results = []
+
     bm25_ready = current_bm25 is not None
 
     if request.method == "POST":
@@ -58,7 +73,12 @@ def home():
             chunks = create_chunks(preview_text)
 
             current_bm25 = build_bm25(chunks)
+
             current_embeddings = generate_embeddings(chunks)
+
+            current_faiss_index = build_faiss_index(
+                current_embeddings
+            )
 
             embedding_count = len(current_embeddings)
 
@@ -75,14 +95,39 @@ def home():
             bm25_ready = True
             message = "Document uploaded successfully."
 
-    query = request.args.get("query", "").strip()
+    query = request.args.get(
+        "query",
+        ""
+    ).strip()
 
-    if query and current_bm25:
+    if (
+        query
+        and current_bm25
+        and current_faiss_index
+    ):
 
-        results = search_bm25(
+        bm25_results = search_bm25(
             current_bm25,
             current_chunks,
             query
+        )
+
+        semantic_results = search_faiss(
+            model,
+            current_faiss_index,
+            current_chunks,
+            query
+        )
+
+        hybrid_results = reciprocal_rank_fusion(
+            bm25_results,
+            semantic_results
+        )
+
+        save_search(
+            query,
+            current_file_name,
+            len(hybrid_results)
         )
 
         preview_text = current_preview_text
@@ -92,15 +137,28 @@ def home():
 
     return render_template(
         "index.html",
+
         preview_text=preview_text,
         chunks=chunks,
+
         file_name=file_name,
         character_count=character_count,
+
         message=message,
+
         bm25_ready=bm25_ready,
-        results=results,
+
         query=query,
-        embedding_count=embedding_count
+
+        embedding_count=embedding_count,
+
+        faiss_ready=current_faiss_index is not None,
+
+        results=bm25_results,
+
+        semantic_results=semantic_results,
+
+        hybrid_results=hybrid_results
     )
 
 
