@@ -7,7 +7,7 @@ from bm25_engine import build_bm25, search_bm25
 from embedding_engine import generate_embeddings, model
 from faiss_engine import build_faiss_index, search_faiss
 from rrf_engine import reciprocal_rank_fusion
-from db import create_database, save_search
+from db import create_database, save_search, get_history
 
 app = Flask(__name__)
 
@@ -159,6 +159,17 @@ def home():
         semantic_results=semantic_results,
 
         hybrid_results=hybrid_results
+    )
+
+
+@app.route("/history")
+def history():
+
+    history = get_history()
+
+    return render_template(
+        "history.html",
+        history=history
     )
 
 

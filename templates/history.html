@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Search History</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <section class="panel">
+
+        <h2>Search History</h2>
+
+        {% if history %}
+
+            {% for item in history %}
+
+            <div class="result-card">
+
+                <h4>{{ item[1] }}</h4>
+
+                <p>
+
+                    <strong>File :</strong>
+
+                    {{ item[2] }}
+
+                </p>
+
+                <p>
+
+                    <strong>Total Results :</strong>
+
+                    {{ item[3] }}
+
+                </p>
+
+                <p>
+
+                    <strong>Searched At :</strong>
+
+                    {{ item[4] }}
+
+                </p>
+
+            </div>
+
+            <br>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty-state">
+
+                No search history available.
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+</body>
+
+</html>
