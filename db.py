@@ -111,3 +111,17 @@ def get_history():
     connection.close()
 
     return data
+
+def clear_history():
+
+    connection = sqlite3.connect(DATABASE)
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        "DELETE FROM search_history"
+    )
+
+    connection.commit()
+
+    connection.close()
