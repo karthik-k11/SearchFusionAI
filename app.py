@@ -14,9 +14,14 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-current_chunks = []
+all_chunks = []
+
+all_file_names = []
+
 current_bm25 = None
+
 current_embeddings = None
+
 current_faiss_index = None
 
 current_preview_text = ""
@@ -31,7 +36,8 @@ create_database()
 @app.route("/", methods=["GET", "POST"])
 def home():
 
-    global current_chunks
+    global all_chunks
+    global all_file_names
     global current_bm25
     global current_embeddings
     global current_faiss_index
@@ -131,7 +137,7 @@ def home():
         )
 
         preview_text = current_preview_text
-        chunks = current_chunks
+        chunks = all_chunks
         file_name = current_file_name
         character_count = current_character_count
 
