@@ -49,7 +49,7 @@ def home():
     global embedding_count
 
     preview_text = current_preview_text
-    chunks = current_chunks
+    chunks = all_chunks
     file_name = current_file_name
     character_count = current_character_count
 
@@ -88,13 +88,13 @@ def home():
 
             embedding_count = len(current_embeddings)
 
-            current_chunks = chunks
+            all_chunks.extend(chunks)
             current_preview_text = preview_text
             current_file_name = uploaded_file.filename
             current_character_count = len(preview_text)
 
             preview_text = current_preview_text
-            chunks = current_chunks
+            chunks = all_chunks
             file_name = current_file_name
             character_count = current_character_count
 
@@ -114,14 +114,14 @@ def home():
 
         bm25_results = search_bm25(
             current_bm25,
-            current_chunks,
+            all_chunks,
             query
         )
 
         semantic_results = search_faiss(
             model,
             current_faiss_index,
-            current_chunks,
+            all_chunks,
             query
         )
 
