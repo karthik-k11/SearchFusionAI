@@ -4,4 +4,5 @@ venv/
 .env
 uploads/
 .DS_Store
-Thumbs.db
+
+search_history.db
