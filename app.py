@@ -78,17 +78,21 @@ def home():
 
             chunks = create_chunks(preview_text)
 
-            current_bm25 = build_bm25(chunks)
+            all_chunks.extend(chunks)
 
-            current_embeddings = generate_embeddings(chunks)
+            current_bm25 = build_bm25(
+                all_chunks
+            )
+
+            current_embeddings = generate_embeddings(
+                all_chunks
+            )
 
             current_faiss_index = build_faiss_index(
                 current_embeddings
             )
 
             embedding_count = len(current_embeddings)
-
-            all_chunks.extend(chunks)
             current_preview_text = preview_text
             current_file_name = uploaded_file.filename
             current_character_count = len(preview_text)
