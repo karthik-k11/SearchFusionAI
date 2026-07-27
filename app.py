@@ -84,6 +84,9 @@ def home():
                 [uploaded_file.filename] * len(chunks)
             )
 
+            print("Total Chunks:", len(all_chunks))
+            print("Total File Names:", len(all_file_names))
+
             current_bm25 = build_bm25(
                 all_chunks
             )
