@@ -80,6 +80,10 @@ def home():
 
             all_chunks.extend(chunks)
 
+            all_file_names.extend(
+                [uploaded_file.filename] * len(chunks)
+            )
+
             current_bm25 = build_bm25(
                 all_chunks
             )
