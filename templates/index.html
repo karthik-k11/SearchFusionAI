@@ -168,7 +168,7 @@
 
             </div>
 
-            {% for chunk, score in hybrid_results %}
+            {% for chunk, score, source_file in hybrid_results %}
 
             <div class="result-card">
 
@@ -176,7 +176,7 @@
 
                     <h4>
 
-                        {{ file_name }}
+                        <h4>{{ source_file }}</h4>
 
                     </h4>
 

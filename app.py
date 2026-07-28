@@ -58,6 +58,7 @@ def home():
     bm25_results = []
     semantic_results = []
     hybrid_results = []
+    hybrid_results_with_files = []
 
     bm25_ready = current_bm25 is not None
 
@@ -140,6 +141,17 @@ def home():
             bm25_results,
             semantic_results
         )
+        hybrid_results_with_files = []
+
+        for chunk, score in hybrid_results:
+
+            chunk_index = all_chunks.index(chunk)
+
+            source_file = all_file_names[chunk_index]
+
+            hybrid_results_with_files.append(
+                (chunk, score, source_file)
+            )
 
         save_search(
             query,
@@ -175,7 +187,7 @@ def home():
 
         semantic_results=semantic_results,
 
-        hybrid_results=hybrid_results
+        hybrid_results=hybrid_results_with_files
     )
 
 
