@@ -15,13 +15,11 @@ UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 all_chunks = []
-
 all_file_names = []
+indexed_files = set()
 
 current_bm25 = None
-
 current_embeddings = None
-
 current_faiss_index = None
 
 current_preview_text = ""
@@ -38,6 +36,8 @@ def home():
 
     global all_chunks
     global all_file_names
+    global indexed_files
+
     global current_bm25
     global current_embeddings
     global current_faiss_index
@@ -68,50 +68,61 @@ def home():
 
         if uploaded_file and uploaded_file.filename:
 
-            file_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                uploaded_file.filename
-            )
+            if uploaded_file.filename in indexed_files:
 
-            uploaded_file.save(file_path)
+                message = "Document already indexed."
 
-            preview_text = extract_text(file_path)
+            else:
 
-            chunks = create_chunks(preview_text)
+                file_path = os.path.join(
+                    app.config["UPLOAD_FOLDER"],
+                    uploaded_file.filename
+                )
 
-            all_chunks.extend(chunks)
+                uploaded_file.save(file_path)
 
-            all_file_names.extend(
-                [uploaded_file.filename] * len(chunks)
-            )
+                preview_text = extract_text(file_path)
 
-            print("Total Chunks:", len(all_chunks))
-            print("Total File Names:", len(all_file_names))
+                chunks = create_chunks(preview_text)
 
-            current_bm25 = build_bm25(
-                all_chunks
-            )
+                all_chunks.extend(chunks)
 
-            current_embeddings = generate_embeddings(
-                all_chunks
-            )
+                all_file_names.extend(
+                    [uploaded_file.filename] * len(chunks)
+                )
 
-            current_faiss_index = build_faiss_index(
-                current_embeddings
-            )
+                indexed_files.add(
+                    uploaded_file.filename
+                )
 
-            embedding_count = len(current_embeddings)
-            current_preview_text = preview_text
-            current_file_name = uploaded_file.filename
-            current_character_count = len(preview_text)
+                current_bm25 = build_bm25(
+                    all_chunks
+                )
 
-            preview_text = current_preview_text
-            chunks = all_chunks
-            file_name = current_file_name
-            character_count = current_character_count
+                current_embeddings = generate_embeddings(
+                    all_chunks
+                )
 
-            bm25_ready = True
-            message = "Document uploaded successfully."
+                current_faiss_index = build_faiss_index(
+                    current_embeddings
+                )
+
+                embedding_count = len(
+                    current_embeddings
+                )
+
+                current_preview_text = preview_text
+                current_file_name = uploaded_file.filename
+                current_character_count = len(preview_text)
+
+                preview_text = current_preview_text
+                chunks = all_chunks
+                file_name = current_file_name
+                character_count = current_character_count
+
+                bm25_ready = True
+
+                message = "Document uploaded successfully."
 
     query = request.args.get(
         "query",
@@ -141,16 +152,21 @@ def home():
             bm25_results,
             semantic_results
         )
-        hybrid_results_with_files = []
 
         for chunk, score in hybrid_results:
 
             chunk_index = all_chunks.index(chunk)
 
-            source_file = all_file_names[chunk_index]
+            source_file = all_file_names[
+                chunk_index
+            ]
 
             hybrid_results_with_files.append(
-                (chunk, score, source_file)
+                (
+                    chunk,
+                    score,
+                    source_file
+                )
             )
 
         save_search(
@@ -200,6 +216,7 @@ def history():
         "history.html",
         history=history
     )
+
 
 @app.route("/clear-history")
 def clear_all_history():
