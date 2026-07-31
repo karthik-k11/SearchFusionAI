@@ -129,6 +129,11 @@ def home():
         ""
     ).strip()
 
+    selected_file = request.args.get(
+        "file",
+        "all"
+    ).strip()
+
     if (
         query
         and current_bm25
@@ -194,6 +199,9 @@ def home():
         bm25_ready=bm25_ready,
 
         query=query,
+
+        selected_file=selected_file,
+        indexed_files=sorted(indexed_files),
 
         embedding_count=embedding_count,
 
