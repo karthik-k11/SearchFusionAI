@@ -125,3 +125,20 @@ def clear_history():
     connection.commit()
 
     connection.close()
+
+def get_indexed_documents():
+
+    documents = {}
+
+    for file_name in indexed_files:
+
+        chunk_count = all_file_names.count(file_name)
+
+        documents[file_name] = chunk_count
+
+    return documents
+
+
+def total_chunks():
+
+    return len(all_chunks)
