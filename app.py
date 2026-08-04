@@ -205,6 +205,27 @@ def history():
         history=get_history()
     )
 
+@app.route("/documents")
+def documents():
+
+    documents = {}
+
+    for file_name in sorted(indexed_files):
+
+        documents[file_name] = all_file_names.count(file_name)
+
+    return render_template(
+
+        "documents.html",
+
+        documents=documents,
+
+        total_documents=len(indexed_files),
+
+        total_chunks=len(all_chunks)
+
+    )
+
 
 @app.route("/clear-history")
 def clear_all_history():
