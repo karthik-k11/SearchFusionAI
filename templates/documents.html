@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Indexed Documents</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <section class="panel">
+
+        <h2>Indexed Documents</h2>
+
+        <br>
+
+        <p>
+
+            <strong>Total Documents :</strong>
+
+            {{ total_documents }}
+
+        </p>
+
+        <p>
+
+            <strong>Total Chunks :</strong>
+
+            {{ total_chunks }}
+
+        </p>
+
+        <br>
+
+        {% if documents %}
+
+            {% for file_name, chunk_count in documents.items() %}
+
+            <div class="result-card">
+
+                <h4>
+
+                    {{ file_name }}
+
+                </h4>
+
+                <p>
+
+                    <strong>Chunks :</strong>
+
+                    {{ chunk_count }}
+
+                </p>
+
+            </div>
+
+            <br>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty-state">
+
+                No indexed documents found.
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+</body>
+
+</html>
