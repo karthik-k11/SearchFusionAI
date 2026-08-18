@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 import os
 
 from extractor import extract_text
@@ -8,6 +8,7 @@ from embedding_engine import generate_embeddings, model
 from faiss_engine import build_faiss_index, search_faiss
 from rrf_engine import reciprocal_rank_fusion
 from db import create_database, save_search, get_history, clear_history
+from export_results import export_to_csv
 
 app = Flask(__name__)
 
@@ -28,6 +29,8 @@ current_character_count = 0
 
 embedding_count = 0
 
+current_hybrid_results = []
+
 create_database()
 
 
@@ -37,13 +40,17 @@ def home():
     global all_chunks
     global all_file_names
     global indexed_files
+
     global current_bm25
     global current_embeddings
     global current_faiss_index
+
     global current_preview_text
     global current_file_name
     global current_character_count
+
     global embedding_count
+    global current_hybrid_results
 
     preview_text = current_preview_text
     chunks = all_chunks
@@ -54,8 +61,11 @@ def home():
 
     bm25_results = []
     semantic_results = []
+
     hybrid_results = []
     hybrid_results_with_files = []
+
+    export_ready = False
 
     bm25_ready = current_bm25 is not None
 
@@ -78,30 +88,48 @@ def home():
 
                 uploaded_file.save(file_path)
 
-                preview_text = extract_text(file_path)
-
-                new_chunks = create_chunks(preview_text)
-
-                all_chunks.extend(new_chunks)
-                all_file_names.extend(
-                    [uploaded_file.filename] * len(new_chunks)
+                preview_text = extract_text(
+                    file_path
                 )
 
-                indexed_files.add(uploaded_file.filename)
+                new_chunks = create_chunks(
+                    preview_text
+                )
 
-                current_bm25 = build_bm25(all_chunks)
+                all_chunks.extend(
+                    new_chunks
+                )
 
-                current_embeddings = generate_embeddings(all_chunks)
+                all_file_names.extend(
+                    [uploaded_file.filename]
+                    * len(new_chunks)
+                )
+
+                indexed_files.add(
+                    uploaded_file.filename
+                )
+
+                current_bm25 = build_bm25(
+                    all_chunks
+                )
+
+                current_embeddings = generate_embeddings(
+                    all_chunks
+                )
 
                 current_faiss_index = build_faiss_index(
                     current_embeddings
                 )
 
-                embedding_count = len(current_embeddings)
+                embedding_count = len(
+                    current_embeddings
+                )
 
                 current_preview_text = preview_text
                 current_file_name = uploaded_file.filename
-                current_character_count = len(preview_text)
+                current_character_count = len(
+                    preview_text
+                )
 
                 preview_text = current_preview_text
                 chunks = all_chunks
@@ -109,11 +137,20 @@ def home():
                 character_count = current_character_count
 
                 bm25_ready = True
-                message = "Document uploaded successfully."
 
-    query = request.args.get("query", "").strip()
+                message = (
+                    "Document uploaded successfully."
+                )
 
-    selected_file = request.args.get("file", "all").strip()
+    query = request.args.get(
+        "query",
+        ""
+    ).strip()
+
+    selected_file = request.args.get(
+        "file",
+        "all"
+    ).strip()
 
     if query and current_bm25 and current_faiss_index:
 
@@ -127,20 +164,34 @@ def home():
             search_chunks = []
             search_files = []
 
-            for chunk, fname in zip(all_chunks, all_file_names):
+            for chunk, fname in zip(
+                all_chunks,
+                all_file_names
+            ):
 
                 if fname == selected_file:
 
-                    search_chunks.append(chunk)
-                    search_files.append(fname)
+                    search_chunks.append(
+                        chunk
+                    )
+
+                    search_files.append(
+                        fname
+                    )
 
         if search_chunks:
 
-            bm25 = build_bm25(search_chunks)
+            bm25 = build_bm25(
+                search_chunks
+            )
 
-            embeddings = generate_embeddings(search_chunks)
+            embeddings = generate_embeddings(
+                search_chunks
+            )
 
-            faiss_index = build_faiss_index(embeddings)
+            faiss_index = build_faiss_index(
+                embeddings
+            )
 
             bm25_results = search_bm25(
                 bm25,
@@ -162,7 +213,9 @@ def home():
 
             for chunk, score in hybrid_results:
 
-                idx = search_chunks.index(chunk)
+                idx = search_chunks.index(
+                    chunk
+                )
 
                 hybrid_results_with_files.append(
                     (
@@ -172,6 +225,14 @@ def home():
                     )
                 )
 
+            current_hybrid_results = (
+                hybrid_results_with_files
+            )
+
+            export_ready = len(
+                current_hybrid_results
+            ) > 0
+
             save_search(
                 query,
                 selected_file,
@@ -180,19 +241,38 @@ def home():
 
     return render_template(
         "index.html",
+
         preview_text=preview_text,
         chunks=chunks,
+
         file_name=file_name,
         character_count=character_count,
+
         message=message,
+
         bm25_ready=bm25_ready,
+
         query=query,
+
         selected_file=selected_file,
-        indexed_files=sorted(indexed_files),
+
+        indexed_files=sorted(
+            indexed_files
+        ),
+
         embedding_count=embedding_count,
-        faiss_ready=current_faiss_index is not None,
+
+        faiss_ready=(
+            current_faiss_index
+            is not None
+        ),
+
         results=bm25_results,
+
         semantic_results=semantic_results,
+
+        export_ready=export_ready,
+
         hybrid_results=hybrid_results_with_files
     )
 
@@ -205,24 +285,115 @@ def history():
         history=get_history()
     )
 
+
 @app.route("/documents")
 def documents():
 
     documents = {}
 
-    for file_name in sorted(indexed_files):
+    for file_name in sorted(
+        indexed_files
+    ):
 
-        documents[file_name] = all_file_names.count(file_name)
+        documents[file_name] = (
+            all_file_names.count(
+                file_name
+            )
+        )
 
     return render_template(
-
         "documents.html",
-
         documents=documents,
+        total_documents=len(
+            indexed_files
+        ),
+        total_chunks=len(
+            all_chunks
+        )
+    )
 
-        total_documents=len(indexed_files),
 
-        total_chunks=len(all_chunks)
+@app.route("/delete-document/<file_name>")
+def delete_document(file_name):
+
+    global all_chunks
+    global all_file_names
+    global indexed_files
+
+    global current_bm25
+    global current_embeddings
+    global current_faiss_index
+
+    global embedding_count
+
+    filtered_chunks = []
+    filtered_file_names = []
+
+    for chunk, name in zip(
+        all_chunks,
+        all_file_names
+    ):
+
+        if name != file_name:
+
+            filtered_chunks.append(
+                chunk
+            )
+
+            filtered_file_names.append(
+                name
+            )
+
+    all_chunks = filtered_chunks
+    all_file_names = filtered_file_names
+
+    indexed_files.discard(
+        file_name
+    )
+
+    if all_chunks:
+
+        current_bm25 = build_bm25(
+            all_chunks
+        )
+
+        current_embeddings = generate_embeddings(
+            all_chunks
+        )
+
+        current_faiss_index = build_faiss_index(
+            current_embeddings
+        )
+
+        embedding_count = len(
+            current_embeddings
+        )
+
+    else:
+
+        current_bm25 = None
+
+        current_embeddings = None
+
+        current_faiss_index = None
+
+        embedding_count = 0
+
+    return documents()
+
+
+@app.route("/export")
+def export():
+
+    export_to_csv(
+        current_hybrid_results
+    )
+
+    return send_file(
+
+        "search_results.csv",
+
+        as_attachment=True
 
     )
 

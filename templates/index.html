@@ -128,9 +128,28 @@
             {% if hybrid_results %}
 
             <div class="success-box">
-                {{ hybrid_results|length }} result(s) found for
+
+                {{ hybrid_results|length }}
+
+                result(s) found for
+
                 "<strong>{{ query }}</strong>"
+
             </div>
+
+            {% if export_ready %}
+
+            <div style="margin-top:15px;">
+
+                <a href="/export">
+
+                    Export Results
+
+                </a>
+
+            </div>
+
+            {% endif %}
 
             {% for chunk, score, source_file in hybrid_results %}
 
