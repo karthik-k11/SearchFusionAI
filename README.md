@@ -30,6 +30,35 @@ Hybrid Document Search and Retrieval System built with Flask.
 - CSS
 - JavaScript
 
+## Screenshots
+
+### Home
+
+The main SearchFusionAI interface for uploading documents and performing searches.
+
+![SearchFusionAI Home](screenshots/Home.png)
+
+
+### Hybrid Search
+
+Hybrid Search combines keyword-based BM25 retrieval with semantic search using FAISS and Reciprocal Rank Fusion (RRF).
+
+![Hybrid Search Results](screenshots/hybrid-search.png)
+
+
+### Indexed Documents
+
+Displays the documents currently indexed by SearchFusionAI along with their chunk counts and document management options.
+
+![Indexed Documents](screenshots/indexed-documents.png)
+
+
+### Search History
+
+Displays previously performed searches, including the query, selected document, result count, and search time.
+
+![Search History](screenshots/search-history.png)
+
 ## Installation
 
 ```bash
